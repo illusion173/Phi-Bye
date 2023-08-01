@@ -1,0 +1,1674 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+  Generator: "former2"
+Description: "PhiByeBackend Cloudformation Template"
+Resources:
+  DynamoDBTableFileTable:
+    DeletionPolicy: Delete
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "UUID"
+          AttributeType: "S"
+        - AttributeName: "file_num"
+          AttributeType: "N"
+        - AttributeName: "filetype"
+          AttributeType: "S"
+        - AttributeName: "original_filename"
+          AttributeType: "S"
+        - AttributeName: "s3_key"
+          AttributeType: "S"
+        - AttributeName: "upload_date"
+          AttributeType: "S"
+      TableName: !Join
+        - "-"
+        - - "file_table"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      KeySchema:
+        - AttributeName: "UUID"
+          KeyType: "HASH"
+        - AttributeName: "file_num"
+          KeyType: "RANGE"
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+        - IndexName: "s3_key-index"
+          KeySchema:
+            - AttributeName: "s3_key"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        - IndexName: "original_filename-index"
+          KeySchema:
+            - AttributeName: "original_filename"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        - IndexName: "upload_date-index"
+          KeySchema:
+            - AttributeName: "upload_date"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        - IndexName: "filetype-index"
+          KeySchema:
+            - AttributeName: "filetype"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+  # END DYNAMO DB TABLE
+
+  ################## IAM ROLES #########################
+  # CHECK FILE INPUT SORT ROLE BEGIN
+  CheckFileInputSortRole:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Join
+            - "-"
+            - - "checkFileInputSortPolicy"
+              - !Select
+                - 0
+                - !Split
+                  - "-"
+                  - !Select
+                    - 2
+                    - !Split
+                      - "/"
+                      - !Ref "AWS::StackId"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - kms:*
+                Resource: !GetAtt SymmKeyKMS.Arn
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+
+  # CHECK FILE INPUT SORT ROLE END
+
+
+  # PROCESS TEXT BUCKET ITEMS ROLE BEGIN
+  ProcessTextBucketItemsRole:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Join
+            - "-"
+            - - "ProcessTextBucketItemsPolicy"
+              - !Select
+                - 0
+                - !Split
+                  - "-"
+                  - !Select
+                    - 2
+                    - !Split
+                      - "/"
+                      - !Ref "AWS::StackId"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - kms:*
+                Resource: !GetAtt SymmKeyKMS.Arn
+              - Effect: Allow
+                Action:
+                  - states:*
+                Resource: "*"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+    # PROCESS TEXT BUCKET ITEMS ROLE END
+
+  # Remove Audio Phi ROLE BEGIN
+  RemoveAudioPhiRole:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - states.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Join
+            - "-"
+            - - "RemoveAudioPhi"
+              - !Select
+                - 0
+                - !Split
+                  - "-"
+                  - !Select
+                    - 2
+                    - !Split
+                      - "/"
+                      - !Ref "AWS::StackId"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - kms:*
+                Resource: !GetAtt SymmKeyKMS.Arn
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+    # Remove Audio Phi ROLE END
+  # Start Comprehend Job BEGIN
+  StartComprehendJobRole:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - states.amazonaws.com
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Join
+            - "-"
+            - - "StartComprehendJob"
+              - !Select
+                - 0
+                - !Split
+                  - "-"
+                  - !Select
+                    - 2
+                    - !Split
+                      - "/"
+                      - !Ref "AWS::StackId"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - kms:*
+                Resource: !GetAtt SymmKeyKMS.Arn
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/ComprehendFullAccess"
+        - "arn:aws:iam::aws:policy/ComprehendMedicalFullAccess"
+    # Start Comprehend Job ROLE END
+    # BEGIN AUDIO STEP FUNCTION ROLE
+  AudioStepFunctionRole:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - states.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Join
+            - "-"
+            - - "AudioStepFunctionRole"
+              - !Select
+                - 0
+                - !Split
+                  - "-"
+                  - !Select
+                    - 2
+                    - !Split
+                      - "/"
+                      - !Ref "AWS::StackId"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutResourcePolicy
+                  - logs:DescribeResourcePolicies
+                  - logs:DescribeLogGroups
+                  - dynamodb:*
+                  - lambda:InvokeFunction
+                  - iam:PassRole
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                  - xray:GetSamplingRules
+                  - xray:GetSamplingTargets
+                  - states:StartExecution
+                  - states:DescribeExecution
+                  - states:StopExecution
+                  - events:PutTargets
+                  - events:PutRule
+                  - events:DescribeRule
+                  - kms:DescribeCustomKeyStores
+                  - kms:ListKeys
+                  - kms:DeleteCustomKeyStore
+                  - kms:GenerateRandom
+                  - kms:UpdateCustomKeyStore
+                  - kms:ListAliases
+                  - kms:DisconnectCustomKeyStore
+                  - kms:CreateKey
+                  - kms:ConnectCustomKeyStore
+                  - kms:CreateCustomKeyStore
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - kms:*
+                Resource: !GetAtt SymmKeyKMS.Arn
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/AmazonTranscribeFullAccess"
+    # END AUDIO STEP FUNCTION ROLE
+  TextStepFunctionRole:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - states.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Join
+            - "-"
+            - - "TextStepFunctionRole"
+              - !Select
+                - 0
+                - !Split
+                  - "-"
+                  - !Select
+                    - 2
+                    - !Split
+                      - "/"
+                      - !Ref "AWS::StackId"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutResourcePolicy
+                  - logs:DescribeResourcePolicies
+                  - logs:DescribeLogGroups
+                  - dynamodb:*
+                  - lambda:InvokeFunction
+                  - iam:PassRole
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                  - xray:GetSamplingRules
+                  - xray:GetSamplingTargets
+                Resource: "*"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/ComprehendMedicalFullAccess"
+  ################## IAM ROLES #########################
+
+  ######################### KMS #################
+  SymmKeyKMS:
+    DeletionPolicy: Delete
+    Type: "AWS::KMS::Key"
+    Properties:
+      Enabled: true
+      Description: ""
+      KeyUsage: "ENCRYPT_DECRYPT"
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: key-default-1
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ""
+                - - "arn:aws:iam::"
+                  - !Ref "AWS::AccountId"
+                  - ":root"
+            Action: "kms:*"
+            Resource: "*"
+      KeySpec: "SYMMETRIC_DEFAULT"
+      MultiRegion: true
+      
+  KMSAlias:
+    DeletionPolicy: Delete
+    Type: "AWS::KMS::Alias"
+    Properties:
+      AliasName: "alias/filesymmkey"
+      TargetKeyId: !Ref SymmKeyKMS
+  ######################### KMS #################
+
+  ############### LAMBDA FUNCTIONS ###################
+
+  # START CHECK FILE INPUT FUNCTION
+  checkFileInputSortFunction:
+    DeletionPolicy: Delete
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Description: ""
+      FunctionName: !Join
+        - "-"
+        - - "CheckFileInputSort"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      Handler: index.lambda_handler
+      Architectures:
+        - "x86_64"
+      Code:
+        ZipFile: |
+            import os
+            import uuid
+            from datetime import date
+
+            import boto3
+
+            """
+            RESULT_BUCKET_NAME: !Ref ResultPHIBucket
+            IN_TEXT_PHI_BUCKET_NAME: !Ref InTextPhiBucket
+            IN_AUDIO_PHI_BUCKET_NAME: !Ref InAudioPhiBucket
+            LANDING_IN_BUCKET_NAME: !Ref LandingInputPHIBucket
+            ERROR_BUCKET_NAME: !Ref ErrorPHIBucket
+            """
+
+
+            s3_client = boto3.client("s3")
+            dynamodb_client = boto3.client("dynamodb")
+            FILE_TABLE_NAME = os.environ["FILE_TABLE_NAME"]
+
+
+            def update_dynamodb(
+                uuid, original_filename, filename, file_num, prefix, redacted, file_type
+            ):
+                try:
+                    response = dynamodb_client.put_item(
+                        TableName=FILE_TABLE_NAME,
+                        Item={
+                            "UUID": {"S": uuid},
+                            "file_num": {"N": str(file_num)},
+                            "original_filename": {"S": original_filename},
+                            "filetype": {"S": file_type},
+                            "redacted": {"BOOL": redacted},
+                            "s3_key": {"S": prefix + filename},
+                            "upload_date": {"S": str(date.today().isoformat())},
+                        },
+                    )
+                except Exception as e:
+                    print(e)
+                    return {"statusCode": 500}
+
+
+            def move_file_to_error(source_bucket, source_key):
+                print("ERROR! May be wrong file type")
+                bucket_source_key = source_bucket + "/" + source_key
+                new_fail_key = "wrongfiletype/" + source_key
+                fail_bucket = os.environ["ERROR_BUCKET_NAME"]
+
+                try:
+                    response_copy = s3_client.copy_object(
+                        Bucket=fail_bucket, CopySource=bucket_source_key, Key=new_fail_key
+                    )
+                except Exception as e:
+                    print(e)
+                    return {"statusCode": 500}
+                try:
+                    response_error = s3_client.delete_object(Bucket=source_bucket, Key=source_key)
+                except Exception as e:
+                    print(e)
+                    return {"statusCode": 500}
+
+
+            def move_file(source_bucket, source_key, destination_bucket, file, file_extension):
+                final_bucket = os.environ["RESULT_BUCKET_NAME"]
+
+                key_input_folder = str(uuid.uuid4())
+                new_file_name = str(uuid.uuid4())
+                update_dynamodb(key_input_folder, file, new_file_name, "1", "", False, ".mp3")
+                # move to final_result bucket
+                new_key = key_input_folder + "/" + new_file_name + file_extension
+
+                sourceOfFile = source_bucket + "/" + source_key
+
+                # physical copy to bucket result bucket
+                try:
+                    response_result = s3_client.copy_object(
+                        Bucket=final_bucket, CopySource=sourceOfFile, Key=new_key
+                    )
+                except Exception as e:
+                    print(e)
+                    return e
+
+                # physical copy to worker bucket
+                try:
+                    response_worker = s3_client.copy_object(
+                        Bucket=destination_bucket,
+                        CopySource=sourceOfFile,
+                        Key=new_file_name + file_extension,
+                    )
+                except Exception as e:
+                    print(e)
+                    return e
+
+                # delete from landing bucket
+                try:
+                    response_landing = s3_client.delete_object(Bucket=source_bucket, Key=source_key)
+                except Exception as e:
+                    print(e)
+                    return e
+                return 200
+
+
+            def move_to_worker_text(
+                source_bucket, source_key, destination_bucket, file, file_extension
+            ):
+                # physical copy to worker bucket
+                try:
+                    response_worker = s3_client.copy_object(
+                        Bucket=destination_bucket,
+                        CopySource={"Bucket": source_bucket, "Key": source_key},
+                        Key=source_key,
+                    )
+                except Exception as e:
+                    print(e)
+                    return e
+
+                # delete from landing bucket
+                LandingBucketName = os.environ["LANDING_IN_BUCKET_NAME"]
+
+                try:
+                    response_landing = s3_client.delete_object(
+                        Bucket=LandingBucketName, Key=source_key
+                    )
+                except Exception as e:
+                    print(e)
+                    return e
+                return 200
+
+
+            def lambda_handler(event, context):
+                source_key = event["Records"][0]["s3"]["object"]["key"]
+                source_bucket = event["Records"][0]["s3"]["bucket"]["name"]
+
+                text_input_bucket_name = os.environ["IN_TEXT_PHI_BUCKET_NAME"]
+                audio_input_bucket_name = os.environ["IN_AUDIO_PHI_BUCKET_NAME"]
+                file, file_extension = os.path.splitext(source_key)
+
+                allowed_audio_extensions = [
+                    ".mp3",
+                    ".mp4",
+                    ".wav",
+                    ".flac",
+                    ".amr",
+                    ".ogg",
+                    ".webm",
+                    ".m4a",
+                ]
+                allowed_text_extensions = [".txt"]
+
+                if file_extension in allowed_audio_extensions:
+                    move_file(
+                        source_bucket, source_key, audio_input_bucket_name, file, file_extension
+                    )
+                elif file_extension in allowed_text_extensions:
+                    move_to_worker_text(
+                        source_bucket, source_key, text_input_bucket_name, file, file_extension
+                    )
+
+                else:
+                    move_file_to_error(source_bucket, source_key)
+                    return {"statusCode": 422}
+                return {"statusCode": 200}
+      MemorySize: 128
+      Role: !GetAtt CheckFileInputSortRole.Arn
+      Runtime: "python3.10"
+      Timeout: 3
+      TracingConfig:
+        Mode: "PassThrough"
+      EphemeralStorage:
+        Size: 512
+      Environment:
+        Variables:
+          RESULT_BUCKET_NAME: !Ref ResultPHIBucket
+          IN_TEXT_PHI_BUCKET_NAME: !Ref InTextPhiBucket
+          IN_AUDIO_PHI_BUCKET_NAME: !Ref InAudioPhiBucket
+          LANDING_IN_BUCKET_NAME: !Sub "landingphi-${AWS::AccountId}-${AWS::Region}"
+          ERROR_BUCKET_NAME: !Ref ErrorPHIBucket
+          FILE_TABLE_NAME: !Ref DynamoDBTableFileTable
+
+    # END CHECK FILE INPUT FUNCTION
+  # START Process Text Bucket FUNCTION
+  ProcessTextBucketItemsFunction:
+    DeletionPolicy: Delete
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Description: ""
+      FunctionName: !Join
+        - "-"
+        - - "processTextBucketItem"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      Handler: index.lambda_handler
+      Architectures:
+        - "x86_64"
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import uuid
+          from datetime import date
+
+          import boto3
+          from boto3.dynamodb.conditions import Attr, Key
+
+          """
+          RESULT_BUCKET_NAME: !Ref ResultPHIBucket
+          IN_TEXT_PHI_BUCKET_NAME: !Ref InTextPhiBucket
+          IN_AUDIO_PHI_BUCKET_NAME: !Ref InAudioPhiBucket
+          LANDING_IN_BUCKET_NAME: !Ref LandingInputPHIBucket
+          ERROR_BUCKET_NAME: !Ref ErrorPHIBucket
+          STEP_FUNCTION_ARN: !GetAtt TextStepFunction.Arn
+          FILE_TABLE_NAME: !Ref DynamoDBTableFileTable
+          """
+
+          STEP_FUNCTION_ARN = os.environ["STEP_FUNCTION_ARN"]
+          FILE_TABLE_NAME = os.environ["FILE_TABLE_NAME"]
+          RESULT_BUCKET_NAME = os.environ["RESULT_BUCKET_NAME"]
+          IN_TEXT_PHI_BUCKET_NAME = os.environ["IN_TEXT_PHI_BUCKET_NAME"]
+
+          dynamodb_resource = boto3.resource("dynamodb")
+          dynamodb_client = boto3.client("dynamodb")
+          table = dynamodb_resource.Table(FILE_TABLE_NAME)
+
+
+          # Update DynamoDb for new item
+          def update_dynamodb(
+              uuid, original_filename, filename, file_num, prefix, redacted, file_type
+          ):
+              try:
+                  response = dynamodb_client.put_item(
+                      TableName=FILE_TABLE_NAME,
+                      Item={
+                          "UUID": {"S": uuid},
+                          "file_num": {"N": str(file_num)},
+                          "original_filename": {"S": original_filename},
+                          "filetype": {"S": file_type},
+                          "redacted": {"BOOL": redacted},
+                          "s3_key": {"S": prefix + filename},
+                          "upload_date": {"S": str(date.today().isoformat())},
+                      },
+                  )
+              except Exception as e:
+                  print(e)
+                  return {"statusCode": 500}
+
+
+          def create_folder_rename_file(original_filename):
+              s3_client = boto3.client("s3")
+              # We need to create a new s3 folder in result
+              new_folder_UUID = str(uuid.uuid4())
+              new_file_name_UUID = str(uuid.uuid4())
+
+              # Create a folder for file
+              print("Creating Folder")
+              response = s3_client.put_object(
+                  Bucket=RESULT_BUCKET_NAME, Key=new_folder_UUID + "/"
+              )
+              # Copy object to result folder
+              print("Copy to Result")
+              response_copy_result = s3_client.copy_object(
+                  Bucket=RESULT_BUCKET_NAME,
+                  CopySource={
+                      "Bucket": IN_TEXT_PHI_BUCKET_NAME,
+                      "Key": original_filename + ".txt",
+                  },
+                  Key=new_folder_UUID + "/" + new_file_name_UUID + ".txt",
+              )
+              # copy object and put the new name on it
+              print("Copying to in-text-phi, new name")
+              response_copy_in_text = s3_client.copy_object(
+                  Bucket=IN_TEXT_PHI_BUCKET_NAME,
+                  CopySource={
+                      "Bucket": IN_TEXT_PHI_BUCKET_NAME,
+                      "Key": original_filename + ".txt",
+                  },
+                  Key=new_file_name_UUID + ".txt",
+              )
+
+              # Then delete original
+
+              print("Deleting original")
+              response_delete_original = s3_client.delete_object(
+                  Bucket=IN_TEXT_PHI_BUCKET_NAME, Key=original_filename + ".txt"
+              )
+              # We need to create a dynmodb entry for this item
+              print("Update Dynamodb")
+              update_dynamodb(
+                  new_folder_UUID, original_filename, new_file_name_UUID, "3", "", False, ".txt"
+              )
+
+
+          def begin_step_function(folder_uuid, plain_text_key, original_filename):
+              step_function_client = boto3.client("stepfunctions")
+              input_dict = {
+                  "Original_Filename": {"original_filename": original_filename},
+                  "StatePayload": {"plain_text_key": plain_text_key},
+                  "Folder_UUID": {"UUID": folder_uuid},
+              }
+              response = step_function_client.start_execution(
+                  stateMachineArn=STEP_FUNCTION_ARN,
+                  input=json.dumps(input_dict),
+              )
+
+              return None
+
+
+          def check_if_folder_exists(s3_key):
+              response = table.query(
+                  IndexName="s3_key-index", KeyConditionExpression=Key("s3_key").eq(s3_key)
+              )
+              folder_UUID = ""
+              if response["Items"]:
+                  print(response)
+                  print("Has parent folder")
+                  folder_UUID = response["Items"][0]["UUID"]
+                  original_filename = response["Items"][0]["original_filename"]
+                  plain_text_key = response["Items"][0]["s3_key"] + ".txt"
+                  # from here we start the step function!
+                  begin_step_function(folder_UUID, plain_text_key, original_filename)
+
+              else:
+                  print("Has no parent folder, creating now!")
+                  create_folder_rename_file(s3_key)
+
+
+          def lambda_handler(event, context):
+              s3_full_key = event["object"]["key"]
+              s3_key, file_extension = os.path.splitext(s3_full_key)
+              check_if_folder_exists(s3_key)
+              return {"statusCode": 200, "body": json.dumps("Hello from Lambda!")}
+      MemorySize: 128
+      Role: !GetAtt ProcessTextBucketItemsRole.Arn
+      Runtime: "python3.10"
+      Timeout: 5
+      TracingConfig:
+        Mode: "PassThrough"
+      EphemeralStorage:
+        Size: 512
+      Environment:
+        Variables:
+          RESULT_BUCKET_NAME: !Ref ResultPHIBucket
+          IN_TEXT_PHI_BUCKET_NAME: !Ref InTextPhiBucket
+          IN_AUDIO_PHI_BUCKET_NAME: !Ref InAudioPhiBucket
+          LANDING_IN_BUCKET_NAME: !Ref LandingInputPHIBucket
+          ERROR_BUCKET_NAME: !Ref ErrorPHIBucket
+          STEP_FUNCTION_ARN: !GetAtt TextStepFunction.Arn
+          FILE_TABLE_NAME: !Ref DynamoDBTableFileTable
+    # END Process Text Bucket FUNCTION
+    # BEGIN remove Audio Function
+  RemoveAudioPhiFunction:
+    DeletionPolicy: Delete
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Description: ""
+      FunctionName: !Join
+        - "-"
+        - - "RemoveAudioPhiFunction"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      Handler: index.lambda_handler
+      Architectures:
+        - "x86_64"
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import uuid
+          from datetime import date
+          from pathlib import Path
+
+          import boto3
+          
+          FILE_TABLE_NAME = os.environ["FILE_TABLE_NAME"]
+          RESULT_BUCKET_NAME = os.environ["RESULT_BUCKET_NAME"]
+          IN_TEXT_PHI_BUCKET_NAME = os.environ["IN_TEXT_PHI_BUCKET_NAME"]
+          INAUDIOPHIBUCKET = os.environ["IN_AUDIO_PHI_BUCKET_NAME"]
+
+          s3_client = boto3.client("s3")
+          s3_resource = boto3.resource("s3")
+          dynamodb_resource = boto3.resource("dynamodb")
+          table = dynamodb_resource.Table(FILE_TABLE_NAME)
+          dynamodb_client = boto3.client("dynamodb")
+          from boto3.dynamodb.conditions import Key
+
+          folder_input_uuid = ""
+          original_filename_global = ""
+          new_transcript_uuid = ""
+
+
+          def load_transcript_json(transcript_item_list):
+              # Get the json document
+              transcript_file = ""
+              bucket = transcript_item_list[0]
+              key = transcript_item_list[1]
+              try:
+                  transcript_file = (
+                      s3_resource.Object(bucket, key).get()["Body"].read().decode("utf-8")
+                  )
+              except Exception as e:
+                  print(e)
+
+              # Delete transcript file (cleanup of cache)
+              try:
+                  delete_from_bucket(bucket, key)
+              except Exception as e:
+                  print(e)
+
+              return json.loads(transcript_file)
+
+
+          def delete_from_bucket(Bucket_name, key_to_delete):
+              response = s3_client.delete_object(Bucket=Bucket_name, Key=key_to_delete)
+
+
+          def upload_plaintext_transcript(transcript_string):
+              global new_transcript_uuid
+              new_transcript_uuid = str(uuid.uuid4())
+              # Put into worker bucket
+              response = s3_client.put_object(
+                  Body=transcript_string,
+                  Bucket=IN_TEXT_PHI_BUCKET_NAME,
+                  Key=new_transcript_uuid + ".txt",
+              )
+              # Put into result bucket
+              response = s3_client.put_object(
+                  Body=transcript_string,
+                  Bucket=RESULT_BUCKET_NAME,
+                  Key=folder_input_uuid + "/" + new_transcript_uuid + ".txt",
+              )
+              update_dynamodb(
+                  folder_input_uuid,
+                  original_filename_global,
+                  new_transcript_uuid,
+                  3,
+                  "",
+                  False,
+                  ".txt",
+              )
+
+
+          # Update DynamoDb for new item
+          def update_dynamodb(
+              uuid, original_filename, filename, file_num, prefix, redacted, file_type
+          ):
+              try:
+                  response = dynamodb_client.put_item(
+                      TableName=FILE_TABLE_NAME,
+                      Item={
+                          "UUID": {"S": uuid},
+                          "file_num": {"N": str(file_num)},
+                          "original_filename": {"S": original_filename},
+                          "filetype": {"S": file_type},
+                          "redacted": {"BOOL": redacted},
+                          "s3_key": {"S": prefix + filename},
+                          "upload_date": {"S": str(date.today().isoformat())},
+                      },
+                  )
+              except Exception as e:
+                  print(e)
+                  return {"statusCode": 500}
+
+
+          def get_uuid(filename):
+              uuid = ""
+              response = table.query(
+                  IndexName="s3_key-index", KeyConditionExpression=Key("s3_key").eq(filename)
+              )
+              uuid = response["Items"][0]["UUID"]
+              original_filename = response["Items"][0]["original_filename"]
+              return uuid, original_filename
+
+
+          def remove_audio_phi(entity_time_stamps, file):
+              command_str_p1 = "/opt/bin/ffmpeg -i "
+              redact_times = ""
+              for time_stamps in entity_time_stamps:
+                  s = (
+                      "volume=enable='between(t,"
+                      + str(time_stamps[0])
+                      + ","
+                      + str(time_stamps[1])
+                      + ")':volume=0"
+                      + ", "
+                  )
+                  redact_times += s
+
+              redact_times = '"' + redact_times[:-2] + '"'
+              try:
+                  os.system(
+                      command_str_p1
+                      + "/tmp/"
+                      + file
+                      + " -af "
+                      + redact_times
+                      + " /tmp/redacted-"
+                      + file
+                  )
+
+              except Exception as e:
+                  print(e)
+              filename, file_extension = os.path.splitext(file)
+              try:
+                  # Find appropriate folder
+                  uuid, original_filename = get_uuid(filename)
+                  global folder_input_uuid, original_filename_global
+                  folder_input_uuid = uuid
+                  original_filename_global = original_filename
+
+                  # move to appropriate result bucket & Folder
+                  response = s3_client.upload_file(
+                      "/tmp/redacted-" + file,
+                      RESULT_BUCKET_NAME,
+                      uuid + "/" + "redacted-" + file,
+                  )
+                  # update dynamoodb
+                  update_dynamodb(
+                      uuid, original_filename, filename, 2, "redacted-", True, file_extension
+                  )
+
+              except Exception as e:
+                  print(e)
+
+
+          def parse_url(url: str):
+              scheme_end = url.find("://")
+              netloc_start = scheme_end + 3
+              netloc_end = url.find("/", netloc_start)
+              path_start = netloc_end
+              path_end = url.rfind("/") + 1
+              path = url[path_start:path_end]
+              path = path[1:]
+              filename = url[path_end:]
+
+              return path, filename
+
+
+          def lambda_handler(event, context):
+              # First get bucket / key of mp3
+              mediaurl = event["Media"]["MediaFileUri"]
+              path, file = parse_url(mediaurl)
+
+              # Second get bucket / key of transcript
+              transcripturl = event["Transcript"]["TranscriptFileUri"]
+              path, filename = parse_url(transcripturl)
+              split_items = path.split("/")
+              transcript_url_data = [
+                  split_items[0],
+                  split_items[1] + "/" + filename,
+              ]
+
+              try:
+                  s3_resource.Bucket(INAUDIOPHIBUCKET).download_file(file, "/tmp/" + file)
+
+              except Exception as e:
+                  print(e)
+
+              transcript_json = load_transcript_json(transcript_url_data)
+              transcript_results = transcript_json["results"]
+              transcript_string = transcript_results["transcripts"][0]["transcript"]
+              transcript_entities = transcript_results["entities"]
+
+              entity_time_stamps = []
+
+              for entity in transcript_entities:
+                  entity_time_stamps.append([entity["start_time"], entity["end_time"]])
+
+              remove_audio_phi(entity_time_stamps, file)
+
+              # Delete from worker bucket?
+              try:
+                  delete_from_bucket(INAUDIOPHIBUCKET, file)
+              except Exception as e:
+                  print(e)
+                  return {"StatusCode": 500}
+
+              # Put plain_text_transcript in s3 bucket
+              upload_plaintext_transcript(transcript_string)
+              # need to send transcript data here in return result
+              return {
+                  "Transcript": {"plain_text_key": new_transcript_uuid + ".txt"},
+                  "Folder_UUID": {"UUID": folder_input_uuid},
+                  "Original_Filename": {"original_filename": original_filename_global},
+              }
+      MemorySize: 256
+      Role: !GetAtt RemoveAudioPhiRole.Arn
+      Runtime: "python3.10"
+      Timeout: 60
+      TracingConfig:
+        Mode: "PassThrough"
+      EphemeralStorage:
+        Size: 512
+      Environment:
+        Variables:
+          RESULT_BUCKET_NAME: !Ref ResultPHIBucket
+          IN_TEXT_PHI_BUCKET_NAME: !Ref InTextPhiBucket
+          IN_AUDIO_PHI_BUCKET_NAME: !Ref InAudioPhiBucket
+          LANDING_IN_BUCKET_NAME: !Ref LandingInputPHIBucket
+          ERROR_BUCKET_NAME: !Ref ErrorPHIBucket
+          FILE_TABLE_NAME: !Ref DynamoDBTableFileTable
+    # END remove Audio Function
+    # Begin Start Comprehend Job
+  StartComprehendJobFunction:
+    DeletionPolicy: Delete
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Description: ""
+      FunctionName: !Join
+        - "-"
+        - - "StartComprehendJob"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      Handler: index.lambda_handler
+      Architectures:
+        - "x86_64"
+      Code:
+        ZipFile: |
+          import os
+          from datetime import date
+
+          import boto3
+
+          # This constant ensures anything that will be censored has .8 confidence
+          CONFIDENCE = 0.8
+
+          s3_client = boto3.client("s3")
+
+
+          def get_transcript(source_bucket, source_key):
+              transcript = ""
+
+              response = s3_client.get_object(Bucket=source_bucket, Key=source_key)
+              transcript = response.get("Body").read().decode()
+              return transcript
+
+
+          def get_entity_map(response):
+              print(response)
+              entities = response["Entities"]
+              entity_map = {}
+
+              for entity in entities:
+                  entity_map[entity["Text"]] = entity["Type"]
+
+              return entity_map
+
+
+          def remove_phi_from_transcript(entity_map, transcript):
+              redacted_transcript = transcript
+              for k, v in entity_map.items():
+                  redacted_transcript = redacted_transcript.replace(k, v)
+              return redacted_transcript
+
+
+          def start_comprehend_medical_job(source_bucket, source_key):
+              transcript = get_transcript(source_bucket, source_key)
+              comprehend_medical_client = boto3.client("comprehendmedical")
+
+              response = comprehend_medical_client.detect_phi(Text=transcript)
+              entity_map = get_entity_map(response)
+
+              redacted_transcript = remove_phi_from_transcript(entity_map, transcript)
+              return redacted_transcript
+
+
+          def start_comprehend_job(transcript):
+              comprehend_client = boto3.client("comprehend")
+
+              response = comprehend_client.detect_entities(Text=transcript, LanguageCode="en")
+              entity_map = get_entity_map(response)
+              full_redacted = remove_phi_from_transcript(entity_map, transcript)
+
+              return full_redacted
+
+
+          def upload_to_s3(destination_folder, destination_key, transcript):
+              result_bucket_name = os.environ["RESULT_BUCKET_NAME"]
+              response = s3_client.put_object(
+                  Body=transcript,
+                  Bucket=result_bucket_name,
+                  Key=destination_folder + "/redacted-" + destination_key,
+              )
+              upload_time = str(date.today().isoformat())
+              return upload_time
+
+
+          def delete_from_bucket(Bucket_name, key_to_delete):
+              response = s3_client.delete_object(Bucket=Bucket_name, Key=key_to_delete)
+
+
+          def lambda_handler(event, context):
+              source_key = event["StatePayload"]["plain_text_key"]
+              folder_UUID = event["Folder_UUID"]["UUID"]
+              original_filename = event["Original_Filename"]["original_filename"]
+
+              # So we have partially redacted
+              in_text_bucket_name = os.environ["IN_TEXT_PHI_BUCKET_NAME"]
+              redacted_medical_transcript = start_comprehend_medical_job(
+                  in_text_bucket_name, source_key
+              )
+              # Now for full redacted
+              redacted_full_transcript = start_comprehend_job(redacted_medical_transcript)
+              upload_time = upload_to_s3(folder_UUID, source_key, redacted_full_transcript)
+              s3_key, file_extension = os.path.splitext(source_key)
+              delete_from_bucket(in_text_bucket_name, source_key)
+
+              return {
+                  "plain_text_key": s3_key,
+                  "final_result_folder": folder_UUID,
+                  "original_filename": original_filename,
+                  "time_uploaded": upload_time,
+              }
+
+      MemorySize: 128
+      Role: !GetAtt StartComprehendJobRole.Arn
+      Runtime: "python3.10"
+      Timeout: 10
+      TracingConfig:
+        Mode: "PassThrough"
+      EphemeralStorage:
+        Size: 512
+      Environment:
+        Variables:
+          RESULT_BUCKET_NAME: !Ref ResultPHIBucket
+          IN_TEXT_PHI_BUCKET_NAME: !Ref InTextPhiBucket
+          IN_AUDIO_PHI_BUCKET_NAME: !Ref InAudioPhiBucket
+          LANDING_IN_BUCKET_NAME: !Ref LandingInputPHIBucket
+          ERROR_BUCKET_NAME: !Ref ErrorPHIBucket
+          
+    # END Start Comprehend Job
+  ############### LAMBDA FUNCTIONS ###################
+
+  ############# STEP FUNCTIONS ####################
+  # BEGIN STEP FUNCTION Audio
+  AudioStepFunction:
+    DependsOn:
+    - InTextPhiBucket
+    - RemoveAudioPhiRole
+    - AudioStepFunctionRole
+    DeletionPolicy: Delete
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString: |-
+        {
+          "Comment": "A description of my state machine",
+          "StartAt": "StartMedicalTranscriptionJob",
+          "States": {
+            "StartMedicalTranscriptionJob": {
+              "Type": "Task",
+              "Parameters": {
+                "ContentIdentificationType": "PHI",
+                "LanguageCode": "en-US",
+                "Media": {
+                  "MediaFileUri.$": "States.Format('s3://{}/{}', $.bucket.name,$.object.key)"
+                },
+                "MedicalTranscriptionJobName.$": "$.object.etag",
+                "OutputBucketName": "${in-text-phi-bucket-name}", 
+                "Specialty": "PRIMARYCARE",
+                "Type": "CONVERSATION"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:transcribe:startMedicalTranscriptionJob",
+              "Next": "Wait 10 sec",
+              "ResultPath": null
+            },
+            "Wait 10 sec": {
+              "Type": "Wait",
+              "Seconds": 20,
+              "Next": "GetMedicalTranscriptionJob"
+            },
+            "GetMedicalTranscriptionJob": {
+              "Type": "Task",
+              "Parameters": {
+                "MedicalTranscriptionJobName.$": "$.object.etag"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:transcribe:getMedicalTranscriptionJob",
+              "Next": "Choice",
+              "OutputPath": "$.MedicalTranscriptionJob"
+            },
+            "Choice": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.TranscriptionJobStatus",
+                  "StringMatches": "COMPLETED",
+                  "Next": "FFmpeg remove PHI"
+                },
+                {
+                  "Variable": "$.TranscriptionJobStatus",
+                  "StringMatches": "FAILED",
+                  "Next": "Fail"
+                }
+              ],
+              "Default": "Pass"
+            },
+            "Pass": {
+              "Type": "Pass",
+              "Next": "Wait 10 sec",
+              "Parameters": {
+                "object": {
+                  "etag.$": "$.MedicalTranscriptionJobName"
+                }
+              }
+            },
+            "FFmpeg remove PHI": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "FunctionName": "${remove_audio_phi_name}",
+                "Payload": {
+                  "Media.$": "$.Media",
+                  "Transcript.$": "$.Transcript"
+                }
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 6,
+                  "BackoffRate": 2
+                }
+              ],
+              "End": true
+            },
+            "Fail": {
+              "Type": "Fail",
+              "Cause": "Transcription Status indicated that the file could not be processed.",
+              "Error": "Transcription Status: FAIL",
+              "Comment": "Reccommend checking cloudwatch logs to view error."
+            }
+          }
+        }
+      DefinitionSubstitutions:
+        remove_audio_phi_name: !Ref RemoveAudioPhiFunction
+        in-text-phi-bucket-name: !Ref InTextPhiBucket
+      RoleArn: !GetAtt AudioStepFunctionRole.Arn
+    # END STEP FUNCTION Audio
+    # Begin Text Step Function
+  TextStepFunction:
+    DeletionPolicy: Delete
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub "textfun"
+      DefinitionString: |-
+        {
+          "Comment": "A description of my state machine",
+          "StartAt": "Lambda Invoke",
+          "States": {
+            "Lambda Invoke": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "Payload.$": "$",
+                "FunctionName": "${start_comprehend_job}"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 6,
+                  "BackoffRate": 2
+                }
+              ],
+              "Next": "File Table Input"
+            },
+            "File Table Input": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::dynamodb:putItem",
+              "Parameters": {
+                "TableName": "${dynamodbTableName}",
+                "Item": {
+                  "UUID": {
+                    "S.$": "$.final_result_folder"
+                  },
+                  "file_num": {
+                    "N": "4"
+                  },
+                  "filetype": {
+                    "S": ".txt"
+                  },
+                  "original_filename": {
+                    "S.$": "$.original_filename"
+                  },
+                  "redacted": {
+                    "BOOL": "True"
+                  },
+                  "s3_key": {
+                    "S.$": "States.Format('redacted-{}',$.plain_text_key)"
+                  },
+                  "upload_date": {
+                    "S.$": "$.time_uploaded"
+                  }
+                }
+              },
+              "End": true
+            }
+          }
+        }
+      DefinitionSubstitutions:
+        dynamodbTableName: !Ref DynamoDBTableFileTable
+        start_comprehend_job: !Ref StartComprehendJobFunction
+      RoleArn: !GetAtt TextStepFunctionRole.Arn
+    # End Text Step Function
+  ############# STEP FUNCTIONS ####################
+
+  ########### BUCKETS ###############################
+  InTextPhiBucket:
+    DependsOn:
+      - SymmKeyKMS
+    DeletionPolicy: Delete
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Suspended
+      BucketName: !Sub "in-text-phi-${AWS::Region}"
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+            EventBridgeEnabled: true
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: aws:kms
+            KMSMasterKeyID: !GetAtt SymmKeyKMS.Arn
+          BucketKeyEnabled: true        
+
+
+  ErrorPHIBucket:
+    DependsOn:
+      - SymmKeyKMS
+    DeletionPolicy: Delete
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Suspended
+      BucketName: !Sub "errorphi-${AWS::AccountId}-${AWS::Region}"
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: aws:kms
+            KMSMasterKeyID: !GetAtt SymmKeyKMS.Arn
+          BucketKeyEnabled: true
+            
+  InAudioPhiBucket:
+    DependsOn:
+      - SymmKeyKMS
+    DeletionPolicy: Delete
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Suspended
+      BucketName: !Sub "inaudiophi-${AWS::AccountId}-${AWS::Region}"
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+            EventBridgeEnabled: true        
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: aws:kms
+            KMSMasterKeyID: !GetAtt SymmKeyKMS.Arn
+          BucketKeyEnabled: true
+
+  ResultPHIBucket:
+    DependsOn:
+      - SymmKeyKMS
+    DeletionPolicy: Delete
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Suspended
+      BucketName: !Sub "resultphi-${AWS::AccountId}-${AWS::Region}"
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: aws:kms
+            KMSMasterKeyID: !GetAtt SymmKeyKMS.Arn
+          BucketKeyEnabled: true
+
+  SortingPermission:
+    DependsOn:
+      - checkFileInputSortFunction
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref checkFileInputSortFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub "arn:aws:s3:::landingphi-${AWS::AccountId}-${AWS::Region}"
+      SourceAccount: !Ref AWS::AccountId
+
+  LandingInputPHIBucket:
+    DependsOn:
+      - SortingPermission
+    DeletionPolicy: Delete
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "landingphi-${AWS::AccountId}-${AWS::Region}"
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt checkFileInputSortFunction.Arn
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: aws:kms
+            KMSMasterKeyID: !GetAtt SymmKeyKMS.Arn
+          BucketKeyEnabled: true
+      VersioningConfiguration:
+        Status: Suspended
+  ########### BUCKETS ###################
+
+  ########## EVENT BRIDGE RULES ###################
+  EventBridgeStartAudio:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Join
+            - "-"
+            - - "EventBridgePolicyAudio"
+              - !Select
+                - 0
+                - !Split
+                  - "-"
+                  - !Select
+                    - 2
+                    - !Split
+                      - "/"
+                      - !Ref "AWS::StackId"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: "*"
+
+  # BEGIN IN AUDIO RULE
+  AudioEventBridgeRule:
+    DependsOn:
+         - AudioStepFunction
+         - EventBridgeStartAudio
+         - InAudioPhiBucket
+    DeletionPolicy: Delete
+    Type: AWS::Events::Rule
+    Properties:
+      EventBusName: default
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !Ref InAudioPhiBucket
+          object:
+            key:
+              - suffix: .mp3
+              - suffix: .mp4
+              - suffix: .wav
+              - suffix: .flac
+              - suffix: .amr
+              - suffix: .ogg
+              - suffix: .webm
+              - suffix: .m4a
+      Name: !Sub "AudioEventPHI"
+      State: ENABLED
+      Targets:
+        - Id: !GetAtt AudioStepFunction.Name
+          Arn: !GetAtt AudioStepFunction.Arn
+          RoleArn: !GetAtt EventBridgeStartAudio.Arn
+          InputPath: $.detail
+  # END IN AUDIO RULE
+
+  EventBridgeStartTextRole:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Join
+            - "-"
+            - - "EventBridgePolicyText"
+              - !Select
+                - 0
+                - !Split
+                  - "-"
+                  - !Select
+                    - 2
+                    - !Split
+                      - "/"
+                      - !Ref "AWS::StackId"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                  - lambda:InvokeFunction
+                Resource: "*"
+
+  TextEventBridgeLambdaPermission:
+    DeletionPolicy: Delete
+    DependsOn:
+         - TextEventBridgeRule
+         - ProcessTextBucketItemsFunction
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt ProcessTextBucketItemsFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt TextEventBridgeRule.Arn
+
+  # BEGIN IN TEXT
+  TextEventBridgeRule:
+    DeletionPolicy: Delete
+    DependsOn:
+         - EventBridgeStartTextRole
+         - InTextPhiBucket
+         - ProcessTextBucketItemsFunction
+    Type: AWS::Events::Rule
+    Properties:
+      EventBusName: default
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !Ref InTextPhiBucket
+          object:
+            key:
+              - suffix: .txt
+      Name: !Join
+        - "-"
+        - - "in-text"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      State: ENABLED
+      Targets:
+        - Id: !Ref ProcessTextBucketItemsFunction
+          Arn: !GetAtt ProcessTextBucketItemsFunction.Arn
+          InputPath: $.detail
+      # END IN TEXT  RULE
+########## EVENT BRIDGE RULES ###################
