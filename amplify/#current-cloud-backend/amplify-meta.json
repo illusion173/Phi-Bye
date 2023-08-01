@@ -1,0 +1,174 @@
+{
+  "providers": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-amplifyphibye-dev-94040-authRole",
+      "UnauthRoleArn": "arn:aws:iam::042288440768:role/amplify-amplifyphibye-dev-94040-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::042288440768:role/amplify-amplifyphibye-dev-94040-authRole",
+      "Region": "us-west-2",
+      "DeploymentBucketName": "amplify-amplifyphibye-dev-94040-deployment",
+      "UnauthRoleName": "amplify-amplifyphibye-dev-94040-unauthRole",
+      "StackName": "amplify-amplifyphibye-dev-94040",
+      "StackId": "arn:aws:cloudformation:us-west-2:042288440768:stack/amplify-amplifyphibye-dev-94040/2ccce1d0-2265-11ee-9c1b-0691d38bd541",
+      "AmplifyAppId": "d355a8gavrjild",
+      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-amplifyphibye-dev-94040-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json"
+    }
+  },
+  "function": {
+    "pullDyanmodb": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "lastBuildTimeStamp": "2023-07-18T20:55:04.156Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2023-07-18T20:55:05.330Z",
+      "distZipFilename": "pullDyanmodb-6c334b3677647131532f-build.zip",
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-amplifyphibye-dev-94040-deployment",
+        "s3Key": "amplify-builds/pullDyanmodb-6c334b3677647131532f-build.zip"
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-amplifyphibye-dev-94040-deployment/amplify-cfn-templates/function/pullDyanmodb-cloudformation-template.json",
+        "logicalId": "functionpullDyanmodb"
+      },
+      "lastPushTimeStamp": "2023-07-19T20:16:43.900Z",
+      "output": {
+        "LambdaExecutionRoleArn": "arn:aws:iam::042288440768:role/amplifyphibyeLambdaRole72279cd9-dev",
+        "Region": "us-west-2",
+        "Arn": "arn:aws:lambda:us-west-2:042288440768:function:pullDyanmodb-dev",
+        "Name": "pullDyanmodb-dev",
+        "LambdaExecutionRole": "amplifyphibyeLambdaRole72279cd9-dev"
+      },
+      "lastPushDirHash": "l3K6wdq1S/Vflq+DHcWu6pTH3cw="
+    },
+    "geturl": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "dependsOn": [],
+      "lastBuildTimeStamp": "2023-07-17T23:00:27.318Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2023-07-17T23:00:28.451Z",
+      "distZipFilename": "geturl-4a2f477275762f65457a-build.zip",
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-amplifyphibye-dev-94040-deployment",
+        "s3Key": "amplify-builds/geturl-4a2f477275762f65457a-build.zip"
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-amplifyphibye-dev-94040-deployment/amplify-cfn-templates/function/geturl-cloudformation-template.json",
+        "logicalId": "functiongeturl"
+      },
+      "lastPushTimeStamp": "2023-07-19T20:16:43.902Z",
+      "output": {
+        "LambdaExecutionRoleArn": "arn:aws:iam::042288440768:role/amplifyphibyeLambdaRoleced84404-dev",
+        "Region": "us-west-2",
+        "Arn": "arn:aws:lambda:us-west-2:042288440768:function:geturl-dev",
+        "Name": "geturl-dev",
+        "LambdaExecutionRole": "amplifyphibyeLambdaRoleced84404-dev"
+      },
+      "lastPushDirHash": "J/Gruv/eEzfuoLKsu3MmbUSinrU="
+    }
+  },
+  "auth": {
+    "amplifyphibye": {
+      "service": "Cognito",
+      "serviceType": "managed",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "frontendAuthConfig": {
+        "socialProviders": [],
+        "usernameAttributes": [],
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyMinLength": 8,
+          "passwordPolicyCharacters": []
+        },
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
+      "lastPushTimeStamp": "2023-07-19T20:16:43.903Z",
+      "customAuth": false,
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-amplifyphibye-dev-94040-deployment/amplify-cfn-templates/auth/amplifyphibye-cloudformation-template.json",
+        "logicalId": "authamplifyphibye"
+      },
+      "output": {
+        "UserPoolId": "us-west-2_B8WIFIyTJ",
+        "AppClientIDWeb": "e1m8d5hvg41in80or8is0m514",
+        "AppClientID": "5gnbpdq60sdqq31r6f5phgefgn",
+        "IdentityPoolId": "us-west-2:0acd6a7a-60ef-4404-9d85-d4ddff9e0f3e",
+        "UserPoolArn": "arn:aws:cognito-idp:us-west-2:042288440768:userpool/us-west-2_B8WIFIyTJ",
+        "IdentityPoolName": "amplifyphibye_identitypool_f506ba37__dev",
+        "UserPoolName": "amplifyphibye_userpool_f506ba37"
+      },
+      "lastPushDirHash": "AgTwql0bS95eZKPR+erI/lpOnSA="
+    },
+    "userPoolGroups": {
+      "service": "Cognito-UserPool-Groups",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [
+        {
+          "category": "auth",
+          "resourceName": "amplifyphibye",
+          "attributes": [
+            "UserPoolId",
+            "AppClientIDWeb",
+            "AppClientID",
+            "IdentityPoolId"
+          ]
+        }
+      ],
+      "lastPushTimeStamp": "2023-07-19T20:16:47.424Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-amplifyphibye-dev-94040-deployment/amplify-cfn-templates/auth/userPoolGroups-cloudformation-template.json",
+        "logicalId": "authuserPoolGroups"
+      },
+      "output": {
+        "phibyeuserpoolGroupRole": "arn:aws:iam::042288440768:role/us-west-2_B8WIFIyTJ-phibyeuserpoolGroupRole"
+      },
+      "lastPushDirHash": "WflYefa7Hb3nX/GRigFcxcyVY6M="
+    }
+  },
+  "api": {
+    "phibyeapi": {
+      "service": "API Gateway",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [
+        {
+          "category": "function",
+          "resourceName": "pullDyanmodb",
+          "attributes": [
+            "Name",
+            "Arn"
+          ]
+        },
+        {
+          "category": "function",
+          "resourceName": "geturl",
+          "attributes": [
+            "Name",
+            "Arn"
+          ]
+        }
+      ],
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-amplifyphibye-dev-94040-deployment/amplify-cfn-templates/api/phibyeapi-cloudformation-template.json",
+        "logicalId": "apiphibyeapi"
+      },
+      "lastPushTimeStamp": "2023-07-19T20:16:43.905Z",
+      "output": {
+        "ApiName": "phibyeapi",
+        "RootUrl": "https://1t7j4ypoq3.execute-api.us-west-2.amazonaws.com/dev",
+        "ApiId": "1t7j4ypoq3"
+      },
+      "lastPushDirHash": "YmvQEjPNkQmcbkU1BQBYTOmMo5k="
+    }
+  },
+  "storage": {}
+}

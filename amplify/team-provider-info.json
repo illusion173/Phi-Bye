@@ -1,0 +1,35 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-amplifyphibye-dev-94040-authRole",
+      "UnauthRoleArn": "arn:aws:iam::042288440768:role/amplify-amplifyphibye-dev-94040-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::042288440768:role/amplify-amplifyphibye-dev-94040-authRole",
+      "Region": "us-west-2",
+      "DeploymentBucketName": "amplify-amplifyphibye-dev-94040-deployment",
+      "UnauthRoleName": "amplify-amplifyphibye-dev-94040-unauthRole",
+      "StackName": "amplify-amplifyphibye-dev-94040",
+      "StackId": "arn:aws:cloudformation:us-west-2:042288440768:stack/amplify-amplifyphibye-dev-94040/2ccce1d0-2265-11ee-9c1b-0691d38bd541",
+      "AmplifyAppId": "d355a8gavrjild",
+      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-amplifyphibye-dev-94040-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json"
+    },
+    "categories": {
+      "function": {
+        "pullDyanmodb": {
+          "deploymentBucketName": "amplify-amplifyphibye-dev-94040-deployment",
+          "s3Key": "amplify-builds/pullDyanmodb-6c334b3677647131532f-build.zip"
+        },
+        "geturl": {
+          "deploymentBucketName": "amplify-amplifyphibye-dev-94040-deployment",
+          "s3Key": "amplify-builds/geturl-4a2f477275762f65457a-build.zip"
+        }
+      },
+      "auth": {
+        "amplifyphibye": {},
+        "userPoolGroups": {}
+      },
+      "api": {
+        "phibyeapi": {}
+      }
+    }
+  }
+}
