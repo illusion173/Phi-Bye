@@ -1,0 +1,6 @@
+go get github.com/aws/aws-sdk-go-v2/aws
+go get github.com/aws/aws-sdk-go-v2/config
+go get github.com/aws/aws-sdk-go-v2/service/SERVICEHERE
+go get github.com/aws/aws-sdk-go-v2/lambda
+GOOS=linux GOARCH=amd64 go build -o bootstrap main.go
+zip lambda-handler.zip bootstrap

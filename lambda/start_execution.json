@@ -1,0 +1,8 @@
+{
+  "StateMachineArn": "arn:aws:states:us-west-2:042288440768:stateMachine:text-stepfunc",
+  "Input": {
+    "StatePayload.$": "$.Transcript",
+    "Folder_UUID.$": "$.Folder_UUID",
+    "Original_Filename.$": "$.Original_Filename"
+  }
+}
