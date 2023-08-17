@@ -1,70 +1,42 @@
-# Getting Started with Create React App
+# Phi-Bye
+## AWS Project 2023 - Developed By Jeremiah Webb
+[![License](https://img.shields.io/github/license/illusion173/Phi-Bye)](https://github.com/illusion173/Phi-Bye/blob/main/LICENSE)
+![Repo Size](https://img.shields.io/github/repo-size/illusion173/Phi-Bye)
+![Language](https://img.shields.io/github/languages/top/illusion173/Phi-Bye)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Architecture Design
+![Phi-Bye](PHIByeArchitecture.png)
+This data pipeline will take in audio & transcript text files with Protected Health Information (PHI) and utput new audio files with the PHI redacted. <br>
 
-## Available Scripts
+## Getting Started
+**WARNING when running this project, you account _will_ be charged by AWS. Please be aware of this.**
 
-In the project directory, you can run:
+To begin, one must have an AWS Account.
 
-### `npm start`
+### AWS Cloudformation Phi-Bye Data Pipeline Set Up
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+1. Run layer.yml - This will create a lambda layer which you must attach to the RemoveAudioPhiFunction.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+2. Run final.yml - This is the complete backend for Phi-Bye.
 
-### `npm test`
+3. Simply upload audio/text files to the landingphi S3 bucket and output will be in the resultphi bucket in respective folders which can be cross referenced via the file_table dynamodb table.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+#### NOTE
+If the layer.yml is not working, check the serverless repo for the ffmpeg layer [here](https://serverlessrepo.aws.amazon.com/applications/us-east-1/145266761615/ffmpeg-lambda-layer). You will have to create the ffmpeg layer from the repo, download it, change the template so it allows python 3.11 & 3.10. Reupload and manually attach the layer to the RemoveAudioPhiFunction.
 
-### `npm run build`
+### Amplify Website Set up
+Read this [page](https://docs.amplify.aws/cli/usage/export-to-cdk/#use-an-exported-amplify-backend-in-aws-cloud-development-kit-cdk) for using the amplify website in cdk.<br>
+Please note the project uses the React Framework and NPM. <br>
+1. Cloudformation templates for used services for both the serverless backend Amplify website and API gatway are in amplify-phi-bye/amplify/backend.
+2. Please note that the lambda functions that are used by API gateway must be changed to use your named s3 buckets. These functions are called geturl & pullDynamodb. Both are located in amplify/backend with respective folders containing code & templates for deployment.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Conclusion
+After setup of both the data pipeline and amplify website, simply go to amplify-phi-bye directory and use npm start to begin the website. 
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Contact
+Jeremiah L Webb (Jeremiah_L_Webb@hotmail.com or WebbJ31@my.erau.edu)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+# Links
+[HIPAA Law](https://www.hhs.gov/hipaa/for-professionals/privacy/index.html)<br>
+[AWS HIPAA Page](https://aws.amazon.com/compliance/hipaa-compliance/)<br>
+[Architecting for HIPAA on AWS White Paper](https://docs.aws.amazon.com/pdfs/whitepapers/latest/architecting-hipaa-security-and-compliance-on-aws/architecting-hipaa-security-and-compliance-on-aws.pdf)
