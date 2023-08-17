@@ -25,7 +25,7 @@ To begin, one must have an AWS Account.
 If the layer.yml is not working, check the serverless repo for the ffmpeg layer [here](https://serverlessrepo.aws.amazon.com/applications/us-east-1/145266761615/ffmpeg-lambda-layer). You will have to create the ffmpeg layer from the repo, download it, change the template so it allows python 3.11 & 3.10. Reupload and manually attach the layer to the RemoveAudioPhiFunction.
 
 ### Amplify Website Set up
-You will need to email me to retrieve the amplify website files for this project. Check below.
+You will need to email me to retrieve the amplify website files for this project. Check below for contact information. <br>
 Read this [page](https://docs.amplify.aws/cli/usage/export-to-cdk/#use-an-exported-amplify-backend-in-aws-cloud-development-kit-cdk) for using the amplify website in cdk.<br>
 Please note the project uses the React Framework and NPM. <br>
 1. Cloudformation templates for used services for both the serverless backend Amplify website and API gatway are in amplify-phi-bye/amplify/backend.
