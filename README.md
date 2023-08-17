@@ -6,7 +6,7 @@
 
 ## Architecture Design
 ![Phi-Bye](PHIByeArchitecture.png)
-This data pipeline will take in audio & transcript text files with Protected Health Information (PHI) and utput new audio files with the PHI redacted. <br>
+This data pipeline will take in audio & transcript text files with Protected Health Information (PHI) and output new audio files with the PHI redacted. <br>
 
 ## Getting Started
 **WARNING when running this project, you account _will_ be charged by AWS. Please be aware of this.**
